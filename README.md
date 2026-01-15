@@ -9,20 +9,21 @@
 
 ## Table of Contents
 1. [Quick Start: Installation & Usage](#quick-start)
-2. [Project Overview](#project-overview)  
-3. [Objectives](#objectives)  
-4. [Dataset Details](#dataset-details)  
-5. [Data Augmentation](#data-augmentation)  
-6. [Model Design & Architecture](#model-design)  
-7. [Training Setup](#training-setup)  
-8. [Hyperparameters](#hyperparameters)  
-9. [Evaluation & Performance](#evaluation)  
-10. [Inference & Visualization](#inference)  
-11. [Deployment Overview](#deployment)  
-12. [Advantages & Limitations](#advantages)  
-13. [Future Improvements](#future-improvements)  
-14. [Diagrams](#diagrams)  
-15. [References](#references)  
+2. [Project Structure](#project-structure)
+3. [Project Overview](#project-overview)  
+4. [Objectives](#objectives)  
+5. [Dataset Details](#dataset-details)  
+6. [Data Augmentation](#data-augmentation)  
+7. [Model Design & Architecture](#model-design)  
+8. [Training Setup](#training-setup)  
+9. [Hyperparameters](#hyperparameters)  
+10. [Evaluation & Performance](#evaluation)  
+11. [Inference & Visualization](#inference)  
+12. [Deployment Overview](#deployment)  
+13. [Advantages & Limitations](#advantages)  
+14. [Future Improvements](#future-improvements)  
+15. [Diagrams](#diagrams)  
+16. [References](#references)  
 
 ---
 
@@ -50,9 +51,63 @@ python -m http.server 5500
 ```
 
 ### 3. Using the App
-- **Upload**: Drag & drop images to detect Hard Hats, Vests, and Persons.
-- **Analytics**: Check the "Analytics" tab for real-time charts and global stats.
-- **History**: All detections are saved to `backend/history.db`.
+- **Live Feed Mode:** Use your **Webcam** to capture real-time frames for instant analysis.
+- **Upload Mode:** Drag & drop images or click "Upload" to detect Hard Hats, Vests, and Persons.
+- **Analytics:** Check the "Analytics" tab for real-time charts and global stats.
+- **Gallery & History:** All detections are saved to `backend/history.db`. Use the **Search Bar** to filter by class (e.g., "Person").
+  - **Delete Individual Items:** Click the red trash icon on any history card to permanently delete that specific detection (removes both database record and image file).
+  - **Clear All History:** Use the "Clear Local History" button in Settings to remove all stored detections.
+- **Export:** Download annotated results directly from the dashboard.
+
+---
+
+## <a id="project-structure"></a>📁 Project Structure
+
+The project follows a **modular architecture** for maintainability and scalability:
+
+```
+YOLOv8/
+├── backend/
+│   ├── app/
+│   │   ├── main.py          # FastAPI application & API routes
+│   │   ├── database.py      # Database operations (SQLite CRUD)
+│   │   ├── model.py         # YOLOv8 model initialization
+│   │   └── utils.py         # Helper functions (image loading, etc.)
+│   ├── models/
+│   │   └── best.pt          # Trained YOLOv8 weights
+│   ├── history_images/      # Stored annotated detection images
+│   ├── history.db           # SQLite database for detection history
+│   └── requirements.txt     # Python dependencies
+│
+├── frontend/
+│   ├── index.html           # Main dashboard UI
+│   ├── style.css            # Styling (dark theme, glassmorphism)
+│   ├── app.js               # Frontend logic (API calls, rendering)
+│   └── debug_delete.html    # Debug page for testing delete functionality
+│
+├── runs/                    # Training outputs (metrics, weights, plots)
+├── data.yaml                # Dataset configuration
+└── README.md                # Project documentation
+```
+
+### Backend Modules
+
+- **`main.py`**: Defines FastAPI routes (`/predict`, `/history`, `/history/{id}`) and CORS middleware.
+- **`database.py`**: Encapsulates all SQLite operations (insert, fetch, delete) for clean separation of concerns.
+- **`model.py`**: Loads the YOLOv8 model with fallback to default weights if custom model is unavailable.
+- **`utils.py`**: Contains utility functions like `load_image()` for preprocessing uploaded images.
+
+### Frontend Features
+
+- **Webcam Integration**: Real-time frame capture and analysis.
+- **Drag & Drop Upload**: Intuitive image upload interface.
+- **History Management**: 
+  - View all past detections in a gallery grid.
+  - Search/filter by class name.
+  - **Delete individual items** via red trash icon (removes DB record + image file).
+  - Clear all history via Settings.
+- **Analytics Dashboard**: Aggregated statistics and class distribution charts.
+- **Download Results**: Export annotated images directly from the UI.
 
 ---
 
@@ -61,9 +116,11 @@ The **YOLOv8 Hard Hat Detection System** is a real-time object detection solutio
 
 **Key highlights:**  
 - **Real-time detection** suitable for industrial environments.  
+- **Webcam Support** for live safety monitoring.
 - **Lightweight YOLOv8n model** optimized for low-latency inference.  
+- **Modular Backend Architecture** with separated database, model, and API layers for maintainability.
 - **Production-ready API** using FastAPI for integration with web, desktop, or mobile applications.  
-- **Interactive dashboard** for visualization, analytics, and historical tracking.
+- **Interactive dashboard** with Analytics, Search, persistent History, and individual item deletion.
 
 ---
 
@@ -77,20 +134,33 @@ The **YOLOv8 Hard Hat Detection System** is a real-time object detection solutio
 
 ## <a id="dataset-details"></a>Dataset Details
 **Source:** Roboflow “Hard Hat Workers” dataset or custom collected images.  
-**Dataset Size:** ~1,000–3,000 annotated images (varies by version).  
+**Dataset Size:** 16,867 annotated images with comprehensive train/validation/test splits.  
 
-**Classes:**  
-1. `Helmet`  
-2. `Person`  
-3. `Safety Vest`  
+**Classes (nc=2):**  
+1. `head` - Human head without helmet  
+2. `helmet` - Hard hat/safety helmet
+
+**Dataset Split Statistics:**
+| Split | Images | Labels | Percentage |
+|-------|--------|--------|------------|
+| **Training** | 14,748 | 14,748 | 87.4% |
+| **Validation** | 1,413 | 1,413 | 8.4% |
+| **Testing** | 706 | 706 | 4.2% |
+| **Total** | **16,867** | **16,867** | **100%** |  
 
 **Dataset Structure:**
 ```
-images/
- ├─ train/       # Training images with bounding box labels
- ├─ val/         # Validation images
- ├─ test/        # Test images for performance evaluation
-data.yaml         # Contains class names, number of classes, and paths
+hard_hat_dataset/
+ ├─ train/
+ │   ├─ images/      # 14,748 training images
+ │   └─ labels/      # 14,748 corresponding YOLO labels
+ ├─ valid/
+ │   ├─ images/      # 1,413 validation images
+ │   └─ labels/      # 1,413 corresponding YOLO labels
+ ├─ test/
+ │   ├─ images/      # 706 test images
+ │   └─ labels/      # 706 corresponding YOLO labels
+data.yaml            # Dataset configuration (nc, class names, paths)
 ```
 
 **Annotation Format:** YOLO format:  
@@ -157,12 +227,25 @@ Data augmentation is critical to improve generalization across construction site
 
 ## <a id="evaluation"></a>Evaluation & Performance
 
-| Metric      | Score | Target | Status |
-|------------|-------|--------|--------|
-| mAP50      | 0.85  | >0.80 | ✅ |
-| mAP50-95   | 0.72  | -      | - |
-| Precision  | 0.83  | High   | - |
-| Recall     | 0.81  | High   | - |
+| Metric     |  Score |  
+|------------|--------|
+| mAP50      | 0.9154 | 
+| mAP50-95   | 0.3690 | 
+| Precision  | 0.9058 | 
+| Recall     | 0.8624 | 
+
+**Per-Class Performance:**
+| Class   | Images | Instances | Precision | Recall | mAP50  | mAP50-95 |
+|---------|--------|-----------|-----------|--------|--------|----------|
+| head    | 256    | 1,339     | 0.894     | 0.866  | 0.906  | 0.385    |
+| helmet  | 1,297  | 3,913     | 0.917     | 0.859  | 0.924  | 0.353    |
+
+**Model Details:**
+- **Model:** YOLOv8 (Ultralytics 8.4.1)
+- **Parameters:** 25,840,918
+- **Layers:** 93 (fused)
+- **GFLOPs:** 78.7
+- **Inference Speed:** 22.0ms per image (Tesla T4 GPU)
 
 **Observations:**  
 - Accurate detection of PPE items even in crowded environments.  
@@ -182,7 +265,9 @@ Data augmentation is critical to improve generalization across construction site
 **Visualization Features:**  
 - Annotated bounding boxes with class label and confidence.  
 - Real-time processing time, total objects detected, and average confidence.  
-- Persistent gallery for historical detections.
+- Persistent gallery for historical detections with **Sort & Filter**.
+- **Individual Item Deletion:** Red trash icon on each card for selective removal.
+- **Downloadable** results for reporting.
 
 ---
 
@@ -192,12 +277,19 @@ Data augmentation is critical to improve generalization across construction site
 - **Frontend:** Responsive HTML/CSS/JS dashboard.  
 - **API Endpoints:**  
   - `POST /predict` – Upload image, receive detection results.
-  - `GET /history` – Retrieve past detection sessions.  
-  - `DELETE /history` – Clear session data.
+  - `GET /history` – Retrieve past detection sessions (limit 50).  
+  - `DELETE /history/{item_id}` – Delete a specific history item (removes DB record and image file).
+  - `DELETE /history` – Clear all session data and images.
+
+**Backend Architecture:**
+- **Modular Design:** Separated concerns into `main.py` (API routes), `database.py` (data persistence), `model.py` (YOLO model), and `utils.py` (helper functions).
+- **Database Layer:** SQLite with dedicated functions for CRUD operations on detection history.
+- **File Management:** Automatic cleanup when deleting individual items or clearing history.
 
 **Deployment Notes:**  
 - Lightweight YOLOv8n variant suitable for edge devices.  
-- Frontend supports drag-and-drop upload, analytics, and persistent storage.  
+- Frontend supports drag-and-drop upload, webcam capture, analytics, and persistent storage.  
+- Individual history item deletion with automatic file cleanup.
 - GPU recommended for high-throughput image streams.
 
 ---
