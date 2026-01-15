@@ -50,7 +50,7 @@ weights/
 *.torchscript
 
 # ===============================
-# Datasets (VERY IMPORTANT)
+# Datasets
 # ===============================
 data/
 datasets/
@@ -61,17 +61,10 @@ val/
 test/
 
 # ===============================
-# Model Outputs
+# Results
 # ===============================
 results/
 predictions/
-
-# ===============================
-# OS Files
-# ===============================
-.DS_Store
-Thumbs.db
-desktop.ini
 
 # ===============================
 # IDEs
@@ -81,7 +74,14 @@ desktop.ini
 *.iml
 
 # ===============================
-# Caches
+# OS
+# ===============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===============================
+# Cache
 # ===============================
 .cache/
 .pytest_cache/
