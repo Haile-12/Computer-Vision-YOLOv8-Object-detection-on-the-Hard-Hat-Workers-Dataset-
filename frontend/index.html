@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Object Detection</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Ionicons for Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">
+                <ion-icon name="aperture-outline" style="font-size: 24px; color: white;"></ion-icon>
+            </div>
+            <span>YOLOv8 OD</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active"><ion-icon name="grid-outline"></ion-icon> Dashboard</li>
+            <li class="nav-item"><ion-icon name="images-outline"></ion-icon> History</li>
+            <li class="nav-item"><ion-icon name="stats-chart-outline"></ion-icon> Analytics</li>
+            <li class="nav-item"><ion-icon name="settings-outline"></ion-icon> Settings</li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <p>Powered by <strong>Haile T.</strong></p>
+            <p>&copy; 2026 All Rights Reserved</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="page-title">
+                <h2>YOLOv8 Object Detection</h2>
+                <p>Real-time Detection & Analysis</p>
+            </div>
+            <div class="user-profile">
+                <ion-icon name="notifications-outline"
+                    style="font-size: 22px; color: var(--text-muted); cursor: pointer;"></ion-icon>
+                <div class="avatar">U</div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard">
+                <!-- Statistics Row -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Objects</span>
+                        <span class="stat-value" id="statTotal">0</span>
+                        <span class="stat-trend"><ion-icon name="cube-outline"></ion-icon> Detected in current
+                            frame</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Avg Confidence</span>
+                        <span class="stat-value" id="statConf">0%</span>
+                        <span class="stat-trend"><ion-icon name="trending-up-outline"></ion-icon> Mean Accuracy</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Processing Time</span>
+                        <span class="stat-value" id="statTime">-- ms</span>
+                        <span class="stat-trend"><ion-icon name="flash-outline"></ion-icon> Latency</span>
+                    </div>
+                </div>
+
+                <!-- Workspace -->
+                <div class="workspace">
+
+                    <!-- Main Viewport -->
+                    <!-- Main Viewport -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title"><ion-icon name="eye-outline"></ion-icon> Live Feed / Upload</span>
+                            <div class="action-buttons" style="display:flex; gap:0.5rem;">
+                                <button class="btn-secondary" id="webcamBtn" onclick="toggleWebcam()">
+                                    <ion-icon name="videocam-outline"></ion-icon> Webcam
+                                </button>
+                                <input type="file" id="imageInput" accept="image/*" hidden>
+                                <button class="btn-primary" onclick="document.getElementById('imageInput').click()">
+                                    <ion-icon name="cloud-upload-outline"></ion-icon> Upload
+                                </button>
+                            </div>
+                        </div>
+                        <div class="viewport" id="dropZone">
+                            <div class="placeholder-state" id="placeholder">
+                                <ion-icon name="image-outline"
+                                    style="font-size: 64px; margin-bottom: 1rem; opacity: 0.5;"></ion-icon>
+                                <h3>No Image Selected</h3>
+                                <p>Drag & drop or upload an image to start analysis</p>
+                            </div>
+
+                            <!-- Result Image -->
+                            <div id="resultContainer" class="hidden"
+                                style="position:relative; width:100%; height:100%;">
+                                <img id="resultImage" style="width:100%; height:100%; object-fit:contain;">
+                                <button class="btn-icon-overlay" title="Download Result" onclick="downloadResult()">
+                                    <ion-icon name="download-outline"></ion-icon>
+                                </button>
+                            </div>
+
+                            <!-- Webcam Elements -->
+                            <video id="webcamFeed" autoplay playsinline class="hidden"
+                                style="width:100%; height:100%; object-fit:cover; transform: scaleX(-1);"></video>
+                            <button id="captureBtn" class="btn-capture hidden" onclick="captureWebcam()">
+                                <ion-icon name="camera"></ion-icon>
+                            </button>
+
+                            <div class="loading-overlay hidden" id="loadingOverlay">
+                                <div class="loading-spinner"></div>
+                                <p style="margin-top: 1rem;">Processing...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Sidebar -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title"><ion-icon name="analytics-outline"></ion-icon> Insights</span>
+                        </div>
+                        <div class="analysis-content">
+                            <!-- ... existing content ... -->
+                            <div class="class-distribution" id="distContainer">
+                                <p style="color: var(--text-muted); text-align: center;">Waiting for data...</p>
+                            </div>
+
+                            <h4
+                                style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">
+                                Detailed List</h4>
+                            <div id="resultsList"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Gallery View -->
+            <div id="view-gallery" class="hidden">
+                <div class="section-header" style="display:flex; justify-content:space-between; align-items:end;">
+                    <div>
+                        <div class="section-title">Detection Gallery</div>
+                        <div class="section-desc">History of recent detections saved locally.</div>
+                    </div>
+                    <div class="search-box">
+                        <ion-icon name="search-outline"></ion-icon>
+                        <input type="text" id="gallerySearch" placeholder="Search class (e.g. 'Person')..."
+                            onkeyup="filterGallery()">
+                    </div>
+                </div>
+                <div class="gallery-grid" id="galleryGrid">
+                    <!-- Items injected via JS -->
+                    <p style="color: var(--text-muted);">No history saved yet.</p>
+                </div>
+            </div>
+
+            <!-- Analytics View -->
+            <div id="view-analytics" class="hidden">
+                <div class="section-header">
+                    <div class="section-title">Global Analytics</div>
+                    <div class="section-desc">Aggregated statistics from all your sessions.</div>
+                </div>
+                <!-- Reusing stat cards for demo purposes, but could be charts -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Scans</span>
+                        <span class="stat-value" id="globalTotalScans">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Objects Found</span>
+                        <span class="stat-value" id="globalTotalObjects">0</span>
+                    </div>
+                </div>
+                <div class="panel" style="padding: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Top Detected Classes</h3>
+                    <div class="class-distribution" id="globalDistContainer">
+                        <!-- Global stats here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="view-settings" class="hidden">
+                <div class="section-header">
+                    <div class="section-title">Settings</div>
+                    <div class="section-desc">Configure detection parameters and application preferences.</div>
+                </div>
+
+                <div class="settings-container">
+                    <div class="form-group">
+                        <label class="form-label">Confidence Threshold: <span id="confValue">25%</span></label>
+                        <div class="range-wrap">
+                            <input type="range" id="confRange" min="5" max="95" value="25">
+                        </div>
+                        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                            Minimum confidence score required to detect an object. Lower values detect more objects but
+                            may include false positives.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Data Management</label>
+                        <button class="btn-danger" onclick="clearHistory()">Clear Local History</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
